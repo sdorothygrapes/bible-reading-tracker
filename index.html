@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#185FA5">
+<title>Bible Tracker</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--tx:#1c1c1e;--sub:#6c6c70;--ac:#185FA5;--line:#d1d1d6;
+--u:#fff;--ut:#1c1c1e;--r:#B5D4F4;--rt:#042C53;--s:#185FA5;--st:#fff}
+@media(prefers-color-scheme:dark){:root{--bg:#000;--card:#1c1c1e;--tx:#f2f2f7;--sub:#98989d;--ac:#6FA8DC;--line:#3a3a3c;
+--u:#2c2c2e;--ut:#f2f2f7;--r:#3F6E9E;--rt:#fff;--s:#8EC1F0;--st:#042C53}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",system-ui,sans-serif}
+.wrap{max-width:520px;margin:0 auto;padding:calc(env(safe-area-inset-top,0px) + 16px) 16px 110px}
+h1{font-size:34px;line-height:1.1;margin:2px 0 14px;font-weight:700;letter-spacing:-.5px}
+p{margin:0}.sub{color:var(--sub);font-size:13px}.ref{font-size:18px;font-weight:600;margin-top:2px}
+.hint{color:var(--sub);font-size:13px;margin:12px 4px}
+.card{background:var(--card);border-radius:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);padding:14px 16px;margin-bottom:12px}
+.row{display:flex;align-items:center;gap:12px}.row>:last-child{margin-left:auto}.between{justify-content:space-between}
+.chips{display:flex;gap:10px;margin-bottom:14px}
+.chip{flex:1;background:var(--card);border-radius:14px;padding:10px 12px;font-size:13px;color:var(--sub);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.chip b{display:block;font-size:22px;color:var(--tx)}
+.s0{background:var(--u);color:var(--ut)}.s1{background:var(--r);color:var(--rt)}.s2{background:var(--s);color:var(--st)}
+.pill{min-width:98px;border:1px solid var(--line);border-radius:999px;padding:10px 14px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer}
+.grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
+.cell{height:42px;border:1px solid var(--line);border-radius:10px;font-family:inherit;font-weight:500;font-size:14px;cursor:pointer;padding:0}
+.strip{display:flex;flex-wrap:wrap;gap:3px;margin-top:10px}
+.strip i{width:11px;height:11px;border-radius:3px;border:1px solid var(--line);display:block}
+select{width:100%;font-family:inherit;font-weight:600;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--tx);margin-bottom:12px}
+.seg{display:flex;gap:6px;margin-bottom:12px}
+.seg button{flex:1;padding:9px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--tx);font-family:inherit;font-weight:500;font-size:14px}
+.seg button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.link{background:none;border:0;padding:0;font-family:inherit;font-weight:600;font-size:16px;color:var(--tx);cursor:pointer}
+.leg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--sub);margin:4px 4px}
+.leg i{display:inline-block;width:12px;height:12px;border-radius:3px;border:1px solid var(--line);vertical-align:-2px;margin-right:5px}
+nav{position:fixed;left:0;right:0;bottom:0;display:flex;background:color-mix(in srgb,var(--card) 90%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);padding:6px 8px calc(env(safe-area-inset-bottom,0px) + 6px)}
+nav button{flex:1;background:none;border:0;padding:12px 0;font-family:inherit;font-weight:500;font-size:14px;color:var(--sub);cursor:pointer}
+nav button.on{color:var(--ac)}
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--tx);color:var(--bg);padding:8px 14px;border-radius:999px;font-size:13px;opacity:0;transition:opacity .2s;pointer-events:none}
+#toast.show{opacity:.92}
+button:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<nav>
+<button data-a="tab" data-v="today" id="n-today">Today</button>
+<button data-a="tab" data-v="lib" id="n-lib">Library</button>
+<button data-a="tab" data-v="prog" id="n-prog">Progress</button>
+</nav>
+<div id="toast"></div>
+<script>
+const API='PASTE_YOUR_APPS_SCRIPT_URL_HERE';
+const BOOKS='Genesis:50,Exodus:40,Leviticus:27,Numbers:36,Deuteronomy:34,Joshua:24,Judges:21,Ruth:4,1 Samuel:31,2 Samuel:24,1 Kings:22,2 Kings:25,1 Chronicles:29,2 Chronicles:36,Ezra:10,Nehemiah:13,Esther:10,Job:42,Psalms:150,Proverbs:31,Ecclesiastes:12,Song of Solomon:8,Isaiah:66,Jeremiah:52,Lamentations:5,Ezekiel:48,Daniel:12,Hosea:14,Joel:3,Amos:9,Obadiah:1,Jonah:4,Micah:7,Nahum:3,Habakkuk:3,Zephaniah:3,Haggai:2,Zechariah:14,Malachi:4,Matthew:28,Mark:16,Luke:24,John:21,Acts:28,Romans:16,1 Corinthians:16,2 Corinthians:13,Galatians:6,Ephesians:6,Philippians:4,Colossians:4,1 Thessalonians:5,2 Thessalonians:3,1 Timothy:6,2 Timothy:4,Titus:3,Philemon:1,Hebrews:13,James:5,1 Peter:5,2 Peter:3,1 John:5,2 John:1,3 John:1,Jude:1,Revelation:22'
+.split(',').map(x=>{const i=x.lastIndexOf(':');return{n:x.slice(0,i),c:+x.slice(i+1)}});
+const PV=[33,22,35,27,23,35,27,36,18,32,31,28,25,35,33,33,28,24,29,30,31,29,35,34,28,28,27,28,27,33,31];
+const OT=BOOKS.slice(0,39),NT=BOOKS.slice(39),TOT=BOOKS.reduce((a,b)=>a+b.c,0);
+const NAMES=['Unread','Read','Studied'];
+const $=id=>document.getElementById(id);
+let S=JSON.parse(localStorage.log||'{}'),pin=localStorage.pin||'',tab='today',cur='Genesis',seg='ot',ready=!!localStorage.log;
+
+const ds=d=>{d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
+const key=(b,c,v)=>b+'|'+c+'|'+(v||'');
+const st=(b,c,v)=>(S[key(b,c,v)]||{}).status|0;
+const rng=(v,n)=>{const e=Math.min(v+1,n);return e>v?v+'-'+e:''+v};
+function chSt(b,c){const w=st(b,c);if(w||b!=='Proverbs')return w;const n=PV[c-1],a=[];
+ for(let v=1;v<=n;v+=2)a.push(st(b,c,rng(v,n)));
+ return a.every(x=>x)?Math.min(...a):a.some(x=>x)?1:0}
+const cs=(b,c,v)=>v?st(b,c,v):chSt(b,c);
+const lbl=i=>i.book+' '+i.ch+(i.v?':'+i.v:'');
+
+function nextCh(list){for(const b of list)for(let c=1;c<=b.c;c++)if(!chSt(b.n,c))return{book:b.n,ch:c,v:''};return null}
+function nextProv(){for(let c=1;c<=31;c++){if(st('Proverbs',c))continue;const n=PV[c-1];
+ for(let v=1;v<=n;v+=2)if(!st('Proverbs',c,rng(v,n)))return{book:'Proverbs',ch:c,v:rng(v,n)}}return null}
+function plan(){const d=ds(),p=JSON.parse(localStorage.plan||'null');if(p&&p.d===d)return p.i;
+ const skip=b=>b.n!=='Psalms'&&b.n!=='Proverbs';
+ const i=[['Old Testament',nextCh(OT.filter(skip))],['New Testament',nextCh(NT)],['Psalm',nextCh([{n:'Psalms',c:150}])],['Proverbs',nextProv()]]
+  .filter(x=>x[1]).map(([s,x])=>({s,...x}));
+ localStorage.plan=JSON.stringify({d,i});return i}
+function streak(){const days=new Set(Object.values(S).filter(x=>x.status>0).map(x=>x.updated));
+ const d=new Date();let n=0;if(!days.has(ds(d)))d.setDate(d.getDate()-1);
+ while(days.has(ds(d))){n++;d.setDate(d.getDate()-1)}return n}
+
+const pill=(b,c,v)=>{const s=cs(b,c,v);return `<button class="pill s${s}" data-a="cyc" data-b="${b}" data-c="${c}" data-v="${v||''}">${NAMES[s]}</button>`};
+const legend=()=>'<div class="leg"><span><i class="s0"></i>Unread</span><span><i class="s1"></i>Read</span><span><i class="s2"></i>Studied</span></div>';
+
+function today(){
+ if(!ready)return '<h1>Today</h1><p class="hint">Loading your reading log...</p>';
+ const items=plan(),dt=new Date().toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'});
+ const done=items.filter(i=>cs(i.book,i.ch,i.v)>0).length;
+ return `<p class="sub">${dt}</p><h1>Today</h1>
+ <div class="chips"><div class="chip"><b>${streak()}</b>day streak</div><div class="chip"><b>${done}/${items.length}</b>read today</div></div>`
+ +items.map(i=>`<div class="card row"><div><p class="sub">${i.s}</p><p class="ref">${lbl(i)}</p></div>${pill(i.book,i.ch,i.v)}</div>`).join('')
+ +'<p class="hint">Tap a button to go from Unread to Read to Studied. Reading somewhere else today? Log it in the Library tab.</p>'}
+
+function lib(){
+ const o=g=>g.map(b=>`<option${b.n===cur?' selected':''}>${b.n}</option>`).join('');
+ const b=BOOKS.find(x=>x.n===cur);let cells='';
+ for(let c=1;c<=b.c;c++)cells+=`<button class="cell s${chSt(cur,c)}" data-a="cyc" data-b="${cur}" data-c="${c}" data-v="">${c}</button>`;
+ return `<h1>Library</h1><select id="sel" aria-label="Book"><optgroup label="Old Testament">${o(OT)}</optgroup><optgroup label="New Testament">${o(NT)}</optgroup></select>
+ <div class="card"><div class="grid">${cells}</div></div>${legend()}
+ <p class="hint">${cur==='Proverbs'?'Tapping a chapter here logs the whole chapter. For 2-verse daily reading, use the Today tab.':'Tap any chapters you read, in any order. Tap again to mark them Studied.'}</p>`}
+
+function prog(){
+ let r=0,s=0;BOOKS.forEach(b=>{for(let c=1;c<=b.c;c++){const x=chSt(b.n,c);if(x)r++;if(x==2)s++}});
+ const L=seg==='ot'?OT:NT;
+ return `<h1>Progress</h1><div class="chips"><div class="chip"><b>${r}</b>of ${TOT.toLocaleString()} read</div><div class="chip"><b>${s}</b>studied</div></div>
+ <div class="seg"><button class="${seg==='ot'?'on':''}" data-a="seg" data-v="ot">Old Testament</button><button class="${seg==='nt'?'on':''}" data-a="seg" data-v="nt">New Testament</button></div>`
+ +L.map(b=>{let rd=0,cells='';for(let c=1;c<=b.c;c++){const x=chSt(b.n,c);if(x)rd++;cells+=`<i class="s${x}"></i>`}
+  return `<div class="card"><div class="row between"><button class="link" data-a="open" data-b="${b.n}">${b.n}</button><span class="sub">${rd} of ${b.c}</span></div><div class="strip">${cells}</div></div>`}).join('')
+ +legend()}
+
+function render(){
+ $('app').innerHTML=tab==='today'?today():tab==='lib'?lib():prog();
+ ['today','lib','prog'].forEach(t=>$('n-'+t).className=t===tab?'on':'')}
+
+function toast(m){const t=$('toast');t.textContent=m;t.className='show';setTimeout(()=>t.className='',1800)}
+async function send(o){
+ try{o.pin=pin;const r=await(await fetch(API,{method:'POST',headers:{'Content-Type':'text/plain'},body:JSON.stringify(o)})).json();
+  if(r.error){toast('Wrong passcode');localStorage.removeItem('pin');return}toast('Saved')}
+ catch(e){toast("Couldn't save. Check your connection.")}}
+function setSt(b,c,v,s){S[key(b,c,v)]={status:s,updated:ds()};localStorage.log=JSON.stringify(S);render();send({book:b,chapter:c,verses:v||'',status:s,date:ds()})}
+async function load(){
+ if(API.startsWith('PASTE')){toast('Add your Apps Script URL in index.html');ready=true;render();return}
+ try{const r=await(await fetch(API+'?pin='+encodeURIComponent(pin))).json();
+  if(r.error){localStorage.removeItem('pin');ask();return}
+  const m={};r.log.forEach(x=>m[x.key]={status:x.status,updated:x.updated});S=m;localStorage.log=JSON.stringify(S)}
+ catch(e){toast('Offline: showing your last saved log')}
+ ready=true;render()}
+function ask(){pin=prompt('Enter your passcode')||'';localStorage.pin=pin;load()}
+
+document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;
+ const a=t.dataset.a,b=t.dataset.b,c=+t.dataset.c,v=t.dataset.v;
+ if(a==='cyc')setSt(b,c,v,(cs(b,c,v)+1)%3);
+ else if(a==='tab'){tab=v;render();scrollTo(0,0)}
+ else if(a==='seg'){seg=v;render()}
+ else if(a==='open'){cur=b;tab='lib';render();scrollTo(0,0)}});
+document.addEventListener('change',e=>{if(e.target.id==='sel'){cur=e.target.value;render()}});
+
+render();
+if(!pin)ask();else load();
+</script>
+</body>
+</html>
