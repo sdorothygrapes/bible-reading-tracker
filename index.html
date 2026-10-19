@@ -150,7 +150,7 @@ async function auth(up){
  const {data,error}=up?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
  if(error)return toast(error.message);
  if(!data.session)return toast('Check your email to confirm, then sign in');
- user=data.session.user;ready=false;render();load()}
+ user=data.session.user;ready=false;render();load();toast(up?'Account created. Welcome!':'Signed in')}
 async function out(){await sb.auth.signOut();localStorage.clear();S={};user=null;ready=false;render()}
 
 document.addEventListener('click',e=>{const t=e.target.closest('[data-a]');if(!t)return;
